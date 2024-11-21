@@ -90,3 +90,34 @@ func (s *PostService) GetPostsByCategory(categoryID int64) ([]models.Post, error
 
 	return posts, nil
 }
+func (s *PostService) GetAllPosts() ([]models.Post, error) {
+	// Query to get all posts with additional details
+	query := `
+		SELECT p.id, p.user_id, p.title, p.content, p.created_at, 
+		       u.username,
+		       (SELECT COUNT(*) FROM likes WHERE content_type = 'post' AND content_id = p.id AND is_like = 1) as likes,
+		       (SELECT COUNT(*) FROM likes WHERE content_type = 'post' AND content_id = p.id AND is_like = 0) as dislikes
+		FROM posts p
+		JOIN users u ON p.user_id = u.id
+		ORDER BY p.created_at DESC
+	`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content,
+			&post.CreatedAt, &post.Username, &post.Likes, &post.Dislikes)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}

@@ -2,9 +2,11 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"forum/web/server/models"
@@ -195,6 +197,31 @@ func (h *PostHandler) GetPostsByCategory(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(posts)
 }
 
+func (h *PostHandler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
+	// Parse the home template
+	tmpl, err := template.ParseFiles("web/templates/index.html")
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Retrieve all posts
+	posts, err := h.postService.GetAllPosts()
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to retrieve posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Execute template with posts data
+	err = tmpl.Execute(w, posts)
+	if err != nil {
+		fmt.Println("Error executing template:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
 // Middleware for authentication
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +267,10 @@ func SetupRoutes(userService *services.UserService, postService *services.PostSe
 	mux := http.NewServeMux()
 
 	// User routes
-	mux.HandleFunc("/", HomeRoute)
+	// mux.HandleFunc("/", HomeRoute)
+	staticHandler := http.FileServer(http.Dir("web/static"))
+    mux.Handle("/static/", http.StripPrefix("/static/", staticHandler))
+	mux.HandleFunc("/", postHandler.GetAllPosts)
 	mux.HandleFunc("/register", userHandler.Register)
 	mux.HandleFunc("/login", userHandler.Login)
 

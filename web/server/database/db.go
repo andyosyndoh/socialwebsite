@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -113,4 +114,49 @@ func (db *Database) InitializeTables() error {
 
 func (db *Database) Close() {
 	db.Conn.Close()
+}
+
+func (db *Database) PopulateMockData() error {
+	// Insert mock categories
+	_, err := db.Conn.Exec(`
+        INSERT OR IGNORE INTO categories (name) VALUES 
+        ('Technology'), 
+        ('Sports'), 
+        ('Music'), 
+        ('Movies')
+    `)
+	if err != nil {
+		return fmt.Errorf("error inserting categories: %v", err)
+	}
+
+	// Insert a mock user (you'd typically use password hashing in a real app)
+	_, err = db.Conn.Exec(`
+        INSERT OR IGNORE INTO users (username, email, password_hash) VALUES 
+        ('testuser', 'test@example.com', 'hashed_password')
+    `)
+	if err != nil {
+		return fmt.Errorf("error inserting user: %v", err)
+	}
+
+	// Insert mock posts
+	_, err = db.Conn.Exec(`
+        INSERT OR IGNORE INTO posts (user_id, title, content) VALUES 
+        (1, 'First Post', 'This is the content of the first post'),
+        (1, 'Another Interesting Post', 'Some more content here')
+    `)
+	if err != nil {
+		return fmt.Errorf("error inserting posts: %v", err)
+	}
+
+	// Link posts to categories
+	_, err = db.Conn.Exec(`
+        INSERT OR IGNORE INTO post_categories (post_id, category_id) VALUES 
+        (1, 1),  -- First post in Technology category
+        (2, 2)   -- Second post in Sports category
+    `)
+	if err != nil {
+		return fmt.Errorf("error linking posts to categories: %v", err)
+	}
+
+	return nil
 }
