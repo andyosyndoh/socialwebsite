@@ -3,37 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forum Landing Page</title>
-    <link rel="stylesheet" href="../static/styles/new.css" />
+    <title>TheForum</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+    <div class="container auth-container" id="auth-container">
+        <div class="card auth-card">
+            <div class="auth-switcher">
+                <button id="show-login" class="active">Login</button>
+                <button id="show-register">Register</button>
+            </div>
+            
+            <form id="login-form" class="auth-form" action="/login" method="POST">
+                <h2>Welcome Back</h2>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            
+            <form id="register-form" class="auth-form" action="/register" method="POST" style="display:none;">
+                <h2>Create Account</h2>
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit" class="btn">Register</button>
+            </form>
+        </div>
+    </div>
 
-<header>
-    <div class="logo">MyForum</div>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/login">Login</a>
-        <a href="/register">Register</a>
-        <a href="/categories">Browse Categories</a>
-    </nav>
-</header>
+    <div id="main-content" style="display:none;">
+        <div class="container">
+            <header class="card">
+                <div class="header-content">
+                    <div class="logo">
+                        <h1>TheForum</h1>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search discussions..." class="form-input">
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn" id="create-post-btn">Create Post</button>
+                        <div class="user-profile">
+                            <img src="/api/placeholder/40/40" alt="User Profile">
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-<main id="main-content">
-  <!-- Main content will be dynamically loaded here -->
-  <section class="loading-message">
-    <p>Loading content, please wait...</p>
-  </section>
-</main>
+            <main>
+                <div class="sidebar">
+                    <nav>
+                        <ul>
+                            <li class="active">Home</li>
+                            <li>Popular</li>
+                            <li>Communities</li>
+                        </ul>
+                        <div class="recent-communities">
+                            <h3>Recent Communities</h3>
+                            <ul>
+                                <li>Technology</li>
+                                <li>Gaming</li>
+                                <li>Movies</li>
+                            </ul>
+                        </div>
+                    </nav>
+                </div>
 
-<div class="footer">
-    <p>&copy; 2024 MyForum. All Rights Reserved.</p>
-    <p>
-        <a href="/about">About Us</a> |
-        <a href="/contact">Contact</a> |
-        <a href="/privacy">Privacy Policy</a> |
-        <a href="/terms">Terms of Service</a>
-    </p>
-</div>
+                <div class="content">
+                    <div id="create-post-modal" style="display:none;">
+                        <form id="create-post-form" action="/posts/create" method="POST">
+                            <input type="text" name="title" placeholder="Post Title" required>
+                            <textarea name="content" placeholder="Post Content" required></textarea>
+                            <button type="submit" class="btn">Submit Post</button>
+                        </form>
+                    </div>
+                    <div id="posts-container">
+                        <!-- Posts will be dynamically inserted here, matching your GetAllPosts handler -->
+                    </div>
+                </div>
 
+                <div class="trending-sidebar">
+                    <div class="card trending-topics">
+                        <h3>Trending Topics</h3>
+                        <ul>
+                            <li>
+                                <span>#Technology</span>
+                                <span>2.4k posts</span>
+                            </li>
+                            <li>
+                                <span>#AI</span>
+                                <span>1.7k posts</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card community-invite">
+                        <h3>Join Our Community</h3>
+                        <p>Connect with thousands of people who share your interests</p>
+                        <button class="btn">Sign Up Now</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Authentication forms toggle
+            const loginBtn = document.getElementById('show-login');
+            const registerBtn = document.getElementById('show-register');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            loginBtn.addEventListener('click', function() {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                loginBtn.classList.add('active');
+                registerBtn.classList.remove('active');
+            });
+
+            registerBtn.addEventListener('click', function() {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                registerBtn.classList.add('active');
+                loginBtn.classList.remove('active');
+            });
+
+            // Create post modal toggle
+            const createPostBtn = document.getElementById('create-post-btn');
+            const createPostModal = document.getElementById('create-post-modal');
+
+            createPostBtn.addEventListener('click', function() {
+                createPostModal.style.display = createPostModal.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Form submission handlers for authentication and post creation
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetch('/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: loginForm.querySelector('input[name="email"]').value,
+                        password: loginForm.querySelector('input[name="password"]').value
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('auth-container').style.display = 'none';
+                        document.getElementById('main-content').style.display = 'block';
+                        return response.json();
+                    }
+                    throw new Error('Login failed');
+                })
+                .then(data => {
+                    console.log('Logged in:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Login failed. Please check your credentials.');
+                });
+            });
+
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetch('/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: registerForm.querySelector('input[name="username"]').value,
+                        email: registerForm.querySelector('input[name="email"]').value,
+                        password: registerForm.querySelector('input[name="password"]').value
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('auth-container').style.display = 'none';
+                        document.getElementById('main-content').style.display = 'block';
+                        return response.json();
+                    }
+                    throw new Error('Registration failed');
+                })
+                .then(data => {
+                    console.log('Registered:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Registration failed. Please try again.');
+                });
+            });
+
+            // Fetch and display posts
+            function fetchPosts() {
+                fetch('/')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('posts-container').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error fetching posts:', error);
+                });
+            }
+
+            // Fetch posts on page load
+            fetchPosts();
+
+            // Post creation handler
+            document.getElementById('create-post-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetch('/posts/create', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: this.querySelector('input[name="title"]').value,
+                        content: this.querySelector('textarea[name="content"]').value
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Refresh posts after creating a new one
+                        fetchPosts();
+                        createPostModal.style.display = 'none';
+                        return response.json();
+                    }
+                    throw new Error('Post creation failed');
+                })
+                .then(data => {
+                    console.log('Post created:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to create post. Please try again.');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
