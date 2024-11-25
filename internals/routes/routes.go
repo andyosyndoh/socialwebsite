@@ -11,6 +11,11 @@ import (
 // Allowed routes
 var allowedRoutes = map[string]bool{
 	"/": true,
+	"/register" : true,
+	"/login" : true,
+	"/profile" : true,
+	"/logout" : true,
+	"/posts" : true,
 }
 
 // RouteChecker is a middleware that checkes allowed routes
@@ -39,4 +44,24 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HomeHandler(w, r)
 	})
+
+	mux.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		handlers.RegisterHandler(w, r)
+	})
+
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+        handlers.LoginHandler(w, r)
+    })
+
+	mux.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+        handlers.ProfileHandler(w, r)
+    })
+
+	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+        handlers.LogoutHandler(w, r)
+    })
+
+	mux.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
+        handlers.GetAllPosts(w, r)
+    })
 }
